@@ -12,6 +12,7 @@
 #include "ui_interface.h"
 #include "kernel.h"
 #include "zerocoin/Zerocoin.h"
+#include "bitcoinrpc.h"
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -40,9 +41,9 @@ CBigNum bnProofOfWorkLimit(~uint256(0) >> 20); // "standard" scrypt target limit
 CBigNum bnProofOfStakeLimit(~uint256(0) >> 20);
 CBigNum bnProofOfWorkLimitTestNet(~uint256(0) >> 16);
 
-unsigned int nTargetSpacing = 1 * 90; // 90 seconds
-unsigned int nStakeMinAge = 12 * 60 * 60; // 12 hour
-unsigned int nStakeMaxAge = 60 * 60 * 24 * 365 ;  // one year
+unsigned int nTargetSpacing = 2.5 * 60; // 2 Minutes seconds
+unsigned int nStakeMinAge = 48 * 60 * 60; // 48 hours
+unsigned int nStakeMaxAge = 60 * 60 * 24 * 182 ;  // half a year
 unsigned int nModifierInterval = 10 * 60; // time to elapse before new modifier is computed
 
 int nCoinbaseMaturity = 50;
@@ -68,7 +69,7 @@ map<uint256, set<uint256> > mapOrphanTransactionsByPrev;
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
-const string strMessageMagic = "cryptcoin Signed Message:\n";
+const string strMessageMagic = "triskelecoin Signed Message:\n";
 
 // Settings
 int64_t nTransactionFee = MIN_TX_FEE;
@@ -963,30 +964,17 @@ uint256 WantedByOrphan(const CBlock* pblockOrphan)
     return pblockOrphan->hashPrevBlock;
 }
 
+
+
 // miner's coin base reward
 int64_t GetProofOfWorkReward(int64_t nFees)
 {
-    int64_t nSubsidy = 31.25 * COIN;
+    double diff = GetDifficulty();
+    int64_t nSubsidy = (1000/diff) * COIN;
     if(pindexBest->nHeight < 2000)
-    {
-        nSubsidy = 500 * COIN;
-    }
-        else if(pindexBest->nHeight < 4000)
-    {
-        nSubsidy = 250 * COIN;
-    }
-        else if(pindexBest->nHeight < 12000)
-    {
-        nSubsidy = 125 * COIN;
-    }
-        else if(pindexBest->nHeight < 48000)
-    {
-        nSubsidy = 62.5 * COIN;
-    }
-        else if(pindexBest->nHeight < 222000)
-    {
-        nSubsidy = 31.25 * COIN;
-    }
+        {
+            nSubsidy = 15 * COIN;
+        }
 	
     if (fDebug && GetBoolArg("-printcreation"))
         printf("GetProofOfWorkReward() : create=%s nSubsidy=%"PRId64"\n", FormatMoney(nSubsidy).c_str(), nSubsidy);
@@ -994,7 +982,7 @@ int64_t GetProofOfWorkReward(int64_t nFees)
     return nSubsidy + nFees;
 }
 
-const int DAILY_BLOCKCOUNT =  960;
+const int YEARLY_BLOCKCOUNT =  210240;
 // miner's coin stake reward based on coin age spent (coin-days)
 int64_t GetProofOfStakeReward(int64_t nCoinAge, int64_t nFees)
 {
@@ -1002,7 +990,15 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, int64_t nFees)
 
     nRewardCoinYear = MAX_MINT_PROOF_OF_STAKE;
 
-    int64_t nSubsidy = nCoinAge * nRewardCoinYear / 365 / COIN;
+    if(pindexBest->nHeight < YEARLY_BLOCKCOUNT)
+    {
+        nRewardCoinYear = 2 * MAX_MINT_PROOF_OF_STAKE;
+    }
+        else if(pindexBest->nHeight < (2 * YEARLY_BLOCKCOUNT))
+    {
+        nRewardCoinYear = 1 * MAX_MINT_PROOF_OF_STAKE;
+    }
+    int64_t nSubsidy = nCoinAge * nRewardCoinYear / 365;
 
 
     if (fDebug && GetBoolArg("-printcreation"))
@@ -2411,7 +2407,7 @@ bool CheckDiskSpace(uint64_t nAdditionalBytes)
         string strMessage = _("Warning: Disk space is low!");
         strMiscWarning = strMessage;
         printf("*** %s\n", strMessage.c_str());
-        uiInterface.ThreadSafeMessageBox(strMessage, "cryptcoin", CClientUIInterface::OK | CClientUIInterface::ICON_EXCLAMATION | CClientUIInterface::MODAL);
+        uiInterface.ThreadSafeMessageBox(strMessage, "triskelecoin", CClientUIInterface::OK | CClientUIInterface::ICON_EXCLAMATION | CClientUIInterface::MODAL);
         StartShutdown();
         return false;
     }
@@ -2500,7 +2496,7 @@ bool LoadBlockIndex(bool fAllowNew)
         if (!fAllowNew)
             return false;
 
-        const char* pszTimestamp = "CryptCoin WHAT BUTUN IS MANNAY? Lets see. Bitcoin paypal integration soon";
+        const char* pszTimestamp = "Putin slams Obama as he meets Poroshenko";
         CTransaction txNew;
         txNew.nTime = 1399444491;
         txNew.vin.resize(1);
@@ -2512,9 +2508,9 @@ bool LoadBlockIndex(bool fAllowNew)
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1400640666;
+        block.nTime    = 1401958000;
         block.nBits    = bnProofOfWorkLimit.GetCompact();
-        block.nNonce   = 681120;
+        block.nNonce   = 0;
 		if(fTestNet)
         {
             block.nNonce   = 0;
@@ -2541,7 +2537,7 @@ bool LoadBlockIndex(bool fAllowNew)
         printf("block.nNonce = %u \n", block.nNonce);
 
         //// debug print
-        assert(block.hashMerkleRoot == uint256("0x79f5016525e20d38dfb130017222aaa7da0631c8db8e3b9c969ab3c0d1a5d632"));
+        assert(block.hashMerkleRoot == uint256("0xbca8ac1594eb194c43450f4cebd465216b0f6f2c0288cb5cd0711eb8bf57b905"));
         block.print();
         assert(block.GetHash() == (!fTestNet ? hashGenesisBlock : hashGenesisBlockTestNet));
         assert(block.CheckBlock());

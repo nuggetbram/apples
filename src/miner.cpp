@@ -526,7 +526,7 @@ void StakeMiner(CWallet *pwallet)
     SetThreadPriority(THREAD_PRIORITY_LOdrm);
 
     // Make this thread recognisable as the mining thread
-    RenameThread("cryptcoin-miner");
+    RenameThread("triskelecoin-miner");
 
     bool fTryToSync = true;
 

@@ -1,4 +1,4 @@
-cryptcoin is a PoW/PoS-based cryptocurrency.
+triskelecoin is a PoW/PoS-based cryptocurrency.
 
 
 RPC Port: 27115
@@ -6,7 +6,7 @@ P2P Port: 27114
 
 Algorithm: X11 POW/POS
 
-Short: CRYPT
+Short: TRS
 
 Total coin: 11 Million cap.
 Block time: 1.5 minute
